@@ -1,0 +1,57 @@
+# docker compose
+
+version: '3.8'
+
+# liste des différents conteneurs
+services:
+  # conteneur pour mongo
+  mongo:
+    # image du conteneur
+    image: mongo
+    container_name: mongo
+    restart: always
+    # ouverture du port mongo
+    ports:
+      - 27017:27017
+     # volume pour persister des données
+    volumes:
+      - "./data/db:/data/db"
+    # deployment dans un réseau
+    networks:
+    - app-mongo-VNet
+
+  # conteneur de mongo-express pour mongodb
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+    depends_on:
+      - mongo
+    networks:
+    - app-mongo-VNet
+
+  # conteneur de mon app flask
+  monapp:
+    # construire au volet de mon image
+    build: .
+    # ouverture des ports du conteneur de mon app
+    ports:
+      - 9002:9001
+    networks:
+      - app-mongo-VNet
+    depends_on:
+      - mongo
+    # ajout d'une variable pour récupérer l'IP du conteneur mongodb
+    environment:
+      - MONGO_HOST=mongo
+
+networks:
+  app-mongo-VNet:
+    driver: bridge
+
+
+      
